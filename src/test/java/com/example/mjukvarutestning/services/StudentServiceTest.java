@@ -1,4 +1,4 @@
-package com.example.mjukvarutestning.controllers;
+package com.example.mjukvarutestning.services;
 
 import com.example.mjukvarutestning.entities.Student;
 import com.example.mjukvarutestning.repo.StudentRepo;

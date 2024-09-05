@@ -26,54 +26,35 @@ public class SchoolServiceTest {
     private SchoolService schoolService;
 
     @Test
-    public void testCalculateAverageGrade() {
-        List<Student> students = Arrays.asList(
-                new Student("Alice", "Williams", LocalDate.of(2001, 1, 12), "alice.williams@example.com"),
-                new Student("Bob", "Brown", LocalDate.of(2002, 3, 9), "bob.brown@example.com")
-        );
-        students.get(0).setJavaProgrammingGrade(4.0);
-        students.get(1).setJavaProgrammingGrade(3.0);
-
-        when(studentService.getAllStudents()).thenReturn(students);
-
-        String averageGrade = schoolService.calculateAverageGrade();
-
-        // Förvänta strängen med punkt som decimaltecken
-        assertThat(averageGrade).isEqualTo("Average grade is 3.5");
-    }
-
-    @Test
-    public void testCalculateAverageGradeNoStudents() {
-        when(studentService.getAllStudents()).thenReturn(List.of());
-
-        assertThatThrownBy(() -> schoolService.calculateAverageGrade())
-                .isInstanceOf(ResponseStatusException.class)
-                .hasMessageContaining("No students found");
-    }
-
-    @Test
-    public void testNumberOfStudentsPerGroupWhenDivideIntoNumberOfGroups() {
+    public void testNumberOfStudentsPerGroupWhenGroupsLessThanTwo() {
         when(studentService.getAllStudents()).thenReturn(Arrays.asList(
-                new Student("John", "Doe", LocalDate.of(2000, 5, 15), "john.doe@example.com"),
-                new Student("Jane", "Doe", LocalDate.of(2001, 6, 20), "jane.doe@example.com"),
-                new Student("Jim", "Beam", LocalDate.of(1999, 3, 11), "jim.beam@example.com")
-        ));
-
-        String result = schoolService.numberOfStudentsPerGroupWhenDivideIntoNumberOfGroups(2);
-
-        // Anpassa efter den faktiska metoden
-        assertThat(result).contains("Not able to manage 2 groups with 3 students");
-    }
-
-    @Test
-    public void testNumberOfStudentsPerGroupTooFewGroups() {
-        when(studentService.getAllStudents()).thenReturn(Arrays.asList(
-                new Student("John", "Doe", LocalDate.of(2000, 5, 15), "john.doe@example.com")
+                new Student("Alice", "Williams", LocalDate.of(2001, 1, 12), "alice.williams@example.com")
         ));
 
         String result = schoolService.numberOfStudentsPerGroupWhenDivideIntoNumberOfGroups(1);
-
         assertThat(result).isEqualTo("There should be at least two groups");
+    }
+
+    @Test
+    public void testNumberOfStudentsPerGroupWhenMoreGroupsThanStudents() {
+        when(studentService.getAllStudents()).thenReturn(Arrays.asList(
+                new Student("Alice", "Williams", LocalDate.of(2001, 1, 12), "alice.williams@example.com")
+        ));
+
+        String result = schoolService.numberOfStudentsPerGroupWhenDivideIntoNumberOfGroups(3);
+        assertThat(result).isEqualTo("Not able to divide 1 students into 3 groups");
+    }
+
+    @Test
+    public void testNumberOfStudentsPerGroupWithRemainder() {
+        when(studentService.getAllStudents()).thenReturn(Arrays.asList(
+                new Student("Alice", "Williams", LocalDate.of(2001, 1, 12), "alice.williams@example.com"),
+                new Student("Bob", "Brown", LocalDate.of(2002, 3, 9), "bob.brown@example.com"),
+                new Student("Charlie", "Chaplin", LocalDate.of(1995, 4, 16), "charlie.chaplin@example.com")
+        ));
+
+        String result = schoolService.numberOfStudentsPerGroupWhenDivideIntoNumberOfGroups(2);
+        assertThat(result).isEqualTo("2 groups could be formed with 1 students per group, but that would leave 1 student hanging");
     }
 
     @Test
@@ -86,18 +67,50 @@ public class SchoolServiceTest {
         ));
 
         String result = schoolService.numberOfGroupsWhenDividedIntoGroupsOf(2);
-
         assertThat(result).isEqualTo("2 students per group is possible, there will be 2 groups");
     }
 
     @Test
-    public void testNumberOfGroupsWhenDividedIntoGroupsOfTooFewStudents() {
+    public void testCalculateAverageGradeWithStudents() {
         when(studentService.getAllStudents()).thenReturn(Arrays.asList(
-                new Student("Alice", "Williams", LocalDate.of(2001, 1, 12), "alice.williams@example.com")
+                new Student("Alice", "Williams", LocalDate.of(2001, 1, 12), "alice.williams@example.com", 4.0),
+                new Student("Bob", "Brown", LocalDate.of(2002, 3, 9), "bob.brown@example.com", 3.0)
         ));
 
-        String result = schoolService.numberOfGroupsWhenDividedIntoGroupsOf(2);
+        String result = schoolService.calculateAverageGrade();
+        assertThat(result).isEqualTo("Average grade is 3.5");
+    }
 
-        assertThat(result).isEqualTo("Not able to manage groups of 2 with only 1 students");
+    @Test
+    public void testCalculateAverageGradeNoStudents() {
+        when(studentService.getAllStudents()).thenReturn(List.of());
+
+        assertThatThrownBy(() -> schoolService.calculateAverageGrade())
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("No students found");
+    }
+
+    @Test
+    public void testGetTopScoringStudents() {
+        Student student1 = new Student("Alice", "Williams", LocalDate.of(2001, 1, 12), "alice.williams@example.com");
+        student1.setJavaProgrammingGrade(4.5);
+
+        Student student2 = new Student("Bob", "Brown", LocalDate.of(2002, 3, 9), "bob.brown@example.com");
+        student2.setJavaProgrammingGrade(3.5);
+
+        when(studentService.getAllStudents()).thenReturn(Arrays.asList(student1, student2));
+
+        List<Student> topStudents = schoolService.getTopScoringStudents();
+        assertThat(topStudents).hasSize(1);
+        assertThat(topStudents.get(0).getJavaProgrammingGrade()).isEqualTo(4.5);
+    }
+
+    @Test
+    public void testGetTopScoringStudentsNoStudents() {
+        when(studentService.getAllStudents()).thenReturn(List.of());
+
+        assertThatThrownBy(() -> schoolService.getTopScoringStudents())
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("No students found");
     }
 }
